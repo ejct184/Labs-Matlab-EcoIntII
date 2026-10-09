@@ -10,8 +10,8 @@ function results = compare_matlab_dynare(save_figures)
 %   1, 2, 4, 5 (chi = 0)     : SOE_B1.mod  vs fsolve on ftrans_rbc, the
 %                              system of TemaB1_experimentos.m (identical to
 %                              Matlab/ftransB1.m)
-%   3, 6       (chi = 0.001) : SOE_B1b.mod vs the Dynare model temaB1.mod used
-%                              by TemaB1_experimentos.m
+%   3, 6       (chi = 0.001) : SOE_B1b.mod vs the Dynare model
+%                              Matlab/temaB1.mod used by TemaB1_experimentos.m
 %
 % For each experiment the function
 %   1. runs the Dynare model (perfect foresight solver);
@@ -19,21 +19,19 @@ function results = compare_matlab_dynare(save_figures)
 %      - experiments 1, 2, 4, 5: fsolve with the same paths, initial guess
 %        and options as TemaB1_experimentos.m ("as run"), and again with
 %        tight tolerances ("exact");
-%      - experiments 3, 6: fsolve on a MATLAB transcription of the equations
-%        of temaB1.mod (subfunction ftrans_temaB1, "exact"). temaB1.mod is
-%        not part of this repository; if a copy is placed in this folder
-%        (it is ignored by git), it is also run exactly as in
+%      - experiments 3, 6: Matlab/temaB1.mod run exactly as in
 %        TemaB1_experimentos.m ("as run", default Dynare tolerance) and with
-%        a tight tolerance;
+%        a tight tolerance, and fsolve on a MATLAB transcription of its
+%        equations (subfunction ftrans_temaB1, "exact");
 %   3. checks that both programs have the same initial steady state and
 %      exogenous paths, that the Dynare paths satisfy the MATLAB equilibrium
 %      conditions (max|F(x_Dynare)| at machine precision), and that the IRFs
 %      coincide;
 %   4. draws the figures of TemaB1_experimentos.m with both solutions.
 %
-% Dynare (5.x or 6.x; 6.x for the optional temaB1.mod run) must be on the
-% MATLAB/Octave path. Run it from the Dynare folder of this repository (or
-% with that folder on the path).
+% Dynare (6.x; with 5.x the temaB1.mod run, which uses Dynare 6 syntax, is
+% skipped) must be on the MATLAB/Octave path. Run it from the Dynare folder
+% of this repository (or with that folder on the path).
 %
 % Note: TemaB1_experimentos.m calls fsolve with a T x 6 matrix as initial
 % guess. MATLAB's fsolve works internally with x0(:), so here the systems are
@@ -63,10 +61,11 @@ dynare('SOE_B1b', 'noclearall');
 dyn_B1b = evalin('base', 'soe_B1b');
 ss_B1b  = evalin('base', 'ss_B1b');
 
-% Optional: the Dynare model temaB1.mod of TemaB1_experimentos.m
+% The Dynare model Matlab/temaB1.mod of TemaB1_experimentos.m
 boss = [];
-if exist(fullfile(here, 'temaB1.mod'), 'file') == 2
-    boss = run_temaB1();
+matlab_folder = fullfile(here, '..', 'Matlab');
+if exist(fullfile(matlab_folder, 'temaB1.mod'), 'file') == 2
+    boss = run_temaB1(matlab_folder);
 end
 
 titles = {'Choque tecnologico no anticipado, chi = 0 (SOE_B1.mod)', ...
@@ -137,7 +136,7 @@ for e = 1:6
         fprintf('Max |F| of Matlab/ftransB1.m at the Dynare solution       %9.2e\n', m.F_ftransB1);
     end
     if premium && isempty(boss)
-        fprintf('(temaB1.mod not found in this folder: "as run" comparison skipped)\n');
+        fprintf('(Matlab/temaB1.mod not run: "as run" comparison skipped)\n');
     end
     fprintf('\nMax |Dynare - MATLAB| (levels, t = 1..%d)   as run       exact\n', numel(dyn.ct));
     for k = 1:nv
@@ -246,7 +245,7 @@ if any(e == [1 2 4 5])
 else
     f  = @(x) ftrans_temaB1(x, T, beta, phi, chi, s0, rst, tht, css, rlong);
     x0 = ones(T, 1) * [wss, lss, yss, cass, s0, css, rlong];
-    m.reference = 'temaB1.mod (as run, if available) and its MATLAB transcription (exact)';
+    m.reference = 'Matlab/temaB1.mod (as run) and its MATLAB transcription (exact)';
 end
 nv = size(x0, 2);
 g  = @(z) reshape(f(reshape(z, T, nv)), [], 1);
@@ -373,10 +372,13 @@ function F = ftrans_temaB1(x, T, beta, phi, chi, s0, rw, tht, css, rlong)
 end
 
 
-function out = run_temaB1()
-% Runs experiments 3 and 6 with temaB1.mod exactly as TemaB1_experimentos.m
-% does (Dynare 6 syntax), with the default tolerance and with tolf = 1e-12.
+function out = run_temaB1(matlab_folder)
+% Runs experiments 3 and 6 with Matlab/temaB1.mod exactly as
+% TemaB1_experimentos.m does (Dynare 6 syntax), with the default tolerance
+% and with tolf = 1e-12. Dynare needs the .mod file in the current folder.
 out = [];
+oldfolder = cd(matlab_folder);
+restore = onCleanup(@() cd(oldfolder));
 try
     evalc('dynare temaB1.mod noclearall');
     base_cmd = ['options_.periods = 100; set_param_value(''chi'', 0.001); ' ...
