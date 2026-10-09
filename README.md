@@ -1,45 +1,55 @@
 # Labs-Matlab-EcoIntII
 
 Numerical solution of a deterministic small open economy (SOE) model with an
-infinitely lived representative household and endogenous labor supply (Tema B1).
-The codes compute the initial steady state and the transition (impulse responses
-in levels) after a **temporary, unanticipated increase in productivity**, in two
-versions:
+infinitely lived representative household and endogenous labor supply
+(Tema B.1, Economia Internacional II). The codes compute the steady state and the
+transition (impulse responses in levels) after productivity and world interest
+rate shocks, with MATLAB and with Dynare.
 
-| Model | Interest rate | MATLAB | Dynare |
-|---|---|---|---|
-| I | exogenous world rate (no risk premium) | `Matlab/ftransB1.m` (experiment I of `TemaB1.m`) | `Dynare/SOE_B1.mod` |
-| II | endogenous, debt elastic risk premium | `Matlab/ftransB1b.m` (experiment II of `TemaB1.m`) | `Dynare/SOE_B1b.mod` |
+| # | Experiment | $\chi$ | MATLAB (`Matlab/TemaB1_experimentos.m`) | Dynare |
+|---|---|---|---|---|
+| 1 | Productivity shock, unanticipated | 0 | `fsolve` | `Dynare/SOE_B1.mod` |
+| 2 | Productivity shock, anticipated (announced in $t=1$, hits in $t=5$) | 0 | `fsolve` | `Dynare/SOE_B1.mod` |
+| 3 | Productivity shock, unanticipated | 0.001 | Dynare model `temaB1.mod` (not in this repository) | `Dynare/SOE_B1b.mod` |
+| 4 | World interest rate shock, unanticipated | 0 | `fsolve` | `Dynare/SOE_B1.mod` |
+| 5 | World interest rate shock, anticipated (announced in $t=1$, hits in $t=5$) | 0 | `fsolve` | `Dynare/SOE_B1.mod` |
+| 6 | World interest rate shock, unanticipated | 0.001 | Dynare model `temaB1.mod` (not in this repository) | `Dynare/SOE_B1b.mod` |
 
-The Dynare files reproduce the MATLAB results to machine precision (see
-[Validation](#validation)). The model is described in `SOE.pdf`.
+`SOE_B1.mod` is the model without risk premium ($\chi = 0$) and `SOE_B1b.mod`
+the model with an endogenous risk premium ($\chi = 0.001$). Both reproduce the
+MATLAB results to machine precision (see [Validation](#validation)). The model
+is described in `SOE.pdf`.
 
 ## Repository structure
 
 ```
 SOE.pdf                         Model notes (equations and steady state)
 Matlab/
-  TemaB1.m                      Main script: calibration, steady state, both experiments, figures
-  ftransB1.m                    Equilibrium conditions, model I (exogenous interest rate)
-  ftransB1b.m                   Equilibrium conditions, model II (endogenous risk premium)
+  TemaB1_experimentos.m         Main script, six experiments and figures (see note below)
+  TemaB1.m                      Original script: experiments I (= 1) and II, figures
+  ftransB1.m                    Equilibrium conditions, chi = 0 (= ftrans_rbc of TemaB1_experimentos.m)
+  ftransB1b.m                   Equilibrium conditions with risk premium used by TemaB1.m
+  Figures/                      MATLAB figures of TemaB1.m
 Dynare/
-  SOE_B1.mod                    Dynare counterpart of ftransB1.m  (model I)
-  SOE_B1b.mod                   Dynare counterpart of ftransB1b.m (model II)
-  get_TemaB1_paths.m            Extracts the Dynare solution in the format of TemaB1.m
-  plot_TemaB1.m                 Draws the same figures as TemaB1.m
+  SOE_B1.mod                    Model without risk premium: experiments 1, 2, 4, 5
+  SOE_B1b.mod                   Model with risk premium: experiments 3, 6
+  get_TemaB1_paths.m            Extracts the Dynare solution (paths and steady state)
+  plot_TemaB1.m                 Draws the figures of TemaB1_experimentos.m
   compare_matlab_dynare.m       Validation: runs MATLAB and Dynare and compares them
-  figures/                      Figures produced by compare_matlab_dynare(true)
+  figures/                      Figures (TemaB1_exp*_vs_MATLAB.png: output of compare_matlab_dynare(true))
 ```
 
-The original MATLAB codes are unchanged.
+`Matlab/TemaB1_experimentos.m` is an unchanged copy of the updated script
+`temaB1.m`. It has a different name because `temaB1.m` and `TemaB1.m` cannot
+coexist on case-insensitive file systems (Windows, macOS). The original MATLAB
+codes are unchanged.
 
 ## The model
 
 The household maximizes $\sum_t \beta^t \left[\ln c_t + \phi \ln(1-l_t)\right]$.
-With the timing used in the codes ($t = 1, \dots, T$ is the row of the solution
-matrix, $t = 1$ is the shock period and it is plotted as period 0; $s_t$ is the
-stock of foreign assets at the **beginning** of period $t$), the equilibrium
-conditions coded in `ftransB1.m` are
+With $t = 1, \dots, T$ the simulation period ($t = 1$ is the shock or
+announcement period, plotted as period 0) and $s_t$ the stock of foreign assets
+at the **beginning** of period $t$, the equilibrium conditions are
 
 ```math
 \begin{aligned}
@@ -48,132 +58,148 @@ conditions coded in `ftransB1.m` are
 &\text{(fy)}  && y_t = \theta_t\, l_t \\
 &\text{(fca)} && ca_t = y_t - c_t + r_t\, s_t \\
 &\text{(fs)}  && s_{t+1} = s_t + ca_t, \qquad s_1 = s_0 \\
-&\text{(fc)}  && c_{t+1} = \beta (1 + r_{t+1})\, c_t, \quad t = 1,\dots,T-1, \qquad s_{T-1} = s_T
+&\text{(fc)}  && c_{t+1} = \beta (1 + r_{t+1})\, c_t
 \end{aligned}
 ```
 
-* **Model I** (`ftransB1.m`): $r_t = r^*_t$, the exogenous world rate, equal to
-  $1/\beta - 1$ in every period.
-* **Model II** (`ftransB1b.m`) adds the endogenous interest rate
+with two closures:
+
+* **No risk premium** ($\chi = 0$, experiments 1, 2, 4, 5): $r_t = r^*_t$, the
+  exogenous world rate. The last Euler equation is replaced by the terminal
+  condition $s_{T-1} = s_T$ (`ftrans_rbc` in `TemaB1_experimentos.m`, identical
+  to `Matlab/ftransB1.m`).
+* **Endogenous risk premium** ($\chi = 0.001$, experiments 3, 6): as in
+  `temaB1.mod` and eq. (8) of `SOE.pdf`,
 
 ```math
-\text{(fr)} \qquad r_{t+1} = r^*_t - \chi\, s_t, \quad t = 1,\dots,T-1, \qquad r_1 = r^*_1 .
+r_t = r^w_t - \chi\, s_t ,
 ```
 
-  Note that the code lets the premium react to assets with a one period lag
-  with respect to eq. (8) of `SOE.pdf` ($r_t = r^w_t - \chi s_t$). The Dynare
-  file replicates the code, not the pdf.
+  and the terminal condition is Dynare's standard one ($c$ and $r$ at their
+  steady state values in period $T+1$).
 
-The last Euler equation is replaced by the terminal condition $s_{T-1} = s_T$
-(the current account is zero at the end of the horizon).
+**Calibration**: $\beta = 0.95$, $r^* = 1/\beta - 1 \approx 0.0526$, $\phi = 0.5$,
+$s_0 = 0$, $\theta_0 = 10$, $\chi = 0.001$, $T = 100$.
 
-**Calibration** (identical in both implementations): $\beta = 0.95$,
-$r^* = 1/\beta - 1 \approx 0.0526$, $\phi = 0.5$, $s_0 = 0$, $\theta_0 = 10$,
-$\chi = 0.001$ (model II), $T = 100$.
+**Shocks** (persistence 0.88 in all cases):
 
-**Shock**: $\theta_1 = 15$ and $\theta_{t+1} = \theta_0 + 0.88(\theta_t - \theta_0)$
-for $t = 1,\dots,29$; productivity is exactly $\theta_0$ from $t = 31$ on (the
-AR(1) path is truncated after 30 periods). The economy is in the steady state at
-$t = 0$ and the whole path becomes known at $t = 1$ (unanticipated, then perfect
-foresight).
+* Experiments 1 and 2: $\theta = 15$ in $t = 1$ (experiment 1) or $t = 5$
+  (experiment 2), then $\theta_{t+1} = \theta_0 + 0.88(\theta_t - \theta_0)$ for 29
+  (experiment 1) or 30 (experiment 2) periods; afterwards $\theta_t = \theta_0$
+  exactly (the AR(1) path is truncated).
+* Experiments 4 and 5: the same for the world rate, $r^* = 0.10$ in $t = 1$ or
+  $t = 5$, then $r^*_{t+1} = r^* + 0.88(r^*_t - r^*)$, truncated.
+* Experiments 3 and 6: AR(1) processes of `temaB1.mod` hit by one innovation in
+  $t = 1$ ($\theta_1 = 15$ or $r^w_1 = 0.10$), **without truncation**.
 
-**Initial steady state** (both models):
+The economy is in the steady state at $t = 0$. In the unanticipated
+experiments the whole path becomes known at $t = 1$; in the anticipated ones it
+is also announced at $t = 1$, but the shock hits at $t = 5$ (perfect foresight in
+both cases).
+
+**Initial steady state** (all experiments):
 $c = \frac{\theta_0}{1+\phi} + \frac{1}{1+\phi}\frac{1-\beta}{\beta}s_0 = 6.6667$,
 $w = \theta_0 = 10$, $l = 1 - \phi c/w = 0.6667$, $y = \theta_0 l = 6.6667$,
 $ca = 0$, $s = s_0 = 0$, $r = 1/\beta - 1 = 5.263\%$.
-In model II this is also the unique steady state, since
+With the risk premium this is also the unique steady state, since
 $s^* = (r^w - (1/\beta - 1))/\chi = 0 = s_0$ (eq. 22 of `SOE.pdf`).
-
-**Main results**
-
-* Model I has a unit root (with $\beta(1+r^*) = 1$ any level of assets is a
-  steady state). Consumption jumps to 7.678 and stays there; the household saves
-  part of the temporary income (current account 3.48 on impact) and settles at a
-  new steady state with assets 28.83, labor 0.616 and output 6.161.
-* Model II is stationary. Consumption jumps to 8.413 and then declines towards
-  6.667; assets peak at 9.12 (period 9) and return to zero, while the interest
-  rate falls to 4.35% and goes back to 5.263%.
 
 ## MATLAB implementation
 
-`TemaB1.m` stacks the equations for $t = 1,\dots,T$ and solves the $6T$
-(model I) or $7T$ (model II) nonlinear equations with `fsolve`, starting from
-the initial steady state. It plots the levels of the variables for periods
-0 to 50 (red circle and dashed line: initial steady state):
+`Matlab/TemaB1_experimentos.m` runs the six experiments and exports the figures
+`FigB1.1.pdf` to `FigB1.6.pdf` (2 x 3 panels, levels, periods 0 to 50; red
+circle and dashed line: initial steady state):
 
-* figure 1 (model I): productivity, consumption, labor, output, current account, assets;
-* figure 2 (model II): productivity, consumption, labor, current account, assets, interest rate (in %).
+* experiments 1, 2, 4, 5: stacks the equations for $t = 1,\dots,T$ and solves the
+  $6T$ equations with `fsolve` (`TolFun = TolX = 1e-10`);
+* experiments 3, 6: solves the Dynare model `temaB1.mod` with
+  `perfect_foresight_setup`/`perfect_foresight_solver` (Dynare 6 syntax).
 
-Run it with `cd Matlab; TemaB1`.
+It needs `temaB1.mod` in the working folder (that file is not part of this
+repository), Dynare 6 and MATLAB R2021a or later (`ylim("padded")`,
+`exportgraphics`, `sgtitle`).
+
+Points of `TemaB1_experimentos.m` worth knowing (all reproduced by the Dynare
+files, so that the figures are identical):
+
+* **Assets in figures 3 and 6 are end of period stocks.** `temaB1.mod` stores the
+  stock at the end of the period, $S_t = s_{t+1}$, while the `fsolve` experiments
+  store the stock at the beginning of the period. Hence the asset panel of
+  figures 3 and 6 starts at $S_1 = ca_1 > 0$ in period 0, and the one of figures
+  1, 2, 4, 5 at $s_1 = 0$.
+* **Units of the interest rate**: percent in figures 3 and 6, decimal in figures
+  4 and 5.
+* **Truncation**: the shocks of experiments 1, 2, 4, 5 are truncated after 30 or
+  31 periods, those of experiments 3 and 6 are not (e.g. $\theta_{31} = 10$ in
+  experiment 1 and $10.108$ in experiment 3).
+* **Experiment 3 is not experiment II of the original `TemaB1.m`.** The original
+  code (`ftransB1b.m`) uses $r_{t+1} = r^*_t - \chi s_t$ (a one period lag), the
+  terminal condition $s_{T-1} = s_T$ and a truncated shock; `temaB1.mod` uses
+  $r_t = r^w_t - \chi s_t$, Dynare's terminal condition and an untruncated shock.
+  Consumption on impact is 8.4128 in the former and 8.4578 in the latter.
+  `SOE_B1b.mod` now follows `temaB1.mod`; the previous version, which reproduces
+  `ftransB1b.m` exactly, is in commit `88544bb` (pull request #1).
+
+The original `Matlab/TemaB1.m` (experiments I and II) is kept unchanged; its
+experiment I is experiment 1.
 
 ## Dynare implementation
 
 Both `.mod` files use Dynare's deterministic, perfect foresight framework
 (`perfect_foresight_setup(periods=100)` and `perfect_foresight_solver`, a Newton
-method on the stacked system), with the same horizon $T = 100$. The design makes
-the stacked Dynare system **equation by equation identical** to the MATLAB system
-$F(x) = 0$:
+method on the stacked system) and run all their experiments in one call. For
+each experiment the `.mod` file builds the paths of productivity (`theta`) and
+of the world interest rate (`rst`) with the same code as
+`TemaB1_experimentos.m`, passes them for every period with
+`shocks(overwrite); ... values (theta_path); ...`, solves the model and draws
+the corresponding figure. Anticipated shocks need nothing special: under perfect
+foresight the whole path is known from period 1 on. Dynare period $t$ is period
+$t$ of the MATLAB codes, and Dynare period 0 (the initial condition) is the
+initial steady state, so $s_1 = s_0 + ca_0 = s_0$.
 
-1. **Same equations and timing.** The model block writes the MATLAB equations
-   literally: `ca = y-c+rst*s` and `s = s(-1)+ca(-1)` with `s` the beginning of
-   period stock. Dynare period $t$ is row $t$ of the `fsolve` solution. Dynare
-   period 0 (the initial condition) is the initial steady state, so
-   $s_1 = s_0 + ca_0 = s_0$, exactly as `fs(1)`.
-2. **Same shock.** Productivity is an exogenous variable (`theta`). Its path is
-   built inside the `.mod` file with the same recursion as `TemaB1.m` and passed
-   to Dynare with `shocks; var theta; periods 1:30; values (theta_shock); end;`.
-   The world rate `rst` is also exogenous (constant at $r^*$, as in `TemaB1.m`),
-   so interest rate experiments can be run as in the MATLAB code.
-3. **Same boundary conditions.** Two exogenous indicators switch equations at the
-   boundaries, as the MATLAB code does:
-   * `dT` (1 only in period $T$) replaces the last Euler equation by
-     $s_{T-1} = s_T$ (`fc(T)`):
-     `(1-dT)*(c(+1)-beta*(1+rst(+1))*c) + dT*(s(-1)-s) = 0`;
-   * `d1` (1 only in period 1, model II) imposes $r_1 = r^*_1$ (`fr(1)`):
-     `r = d1*rst + (1-d1)*(rst(-1)-chi*s(-1))`.
-4. **Same steady state.** `steady_state_model` contains the formulas of
-   `TemaB1.m` (model I) and of `SOE.pdf` eqs. (15) and (20)-(22) (model II), which
-   coincide under the calibration. `steady` and `resid` confirm that all static
-   residuals are zero.
+**`SOE_B1.mod` ($\chi = 0$; experiments 1, 2, 4, 5).** The stacked Dynare system
+is, equation by equation, the system $F(x) = 0$ of `ftrans_rbc`. The terminal
+condition $s_{T-1} = s_T$ is imposed with an exogenous indicator `dT` (1 only in
+period $T$) that switches the last Euler equation off:
+`(1-dT)*(c(+1)-beta*(1+rst(+1))*c) + dT*(s(-1)-s) = 0`. This is necessary
+because the model has a unit root (with $\beta(1+r^*) = 1$ any level of assets
+is a steady state), so the new steady state depends on the transition itself and
+cannot be given to Dynare in advance. With Dynare's default terminal condition
+(the initial steady state) the solver "converges" to a wrong path, with
+consumption fixed at 6.667 and exploding assets. Because the shocks end before
+$T$, the condition $s_{T-1} = s_T$ is also exact for the infinite horizon problem.
 
-**Why the terminal condition must be imposed explicitly.** Dynare's default
-terminal condition sets the forward looking variables at $T+1$ equal to a steady
-state known in advance (`endval`/`steady`).
-
-* In model I this is not possible: because of the unit root, the new steady state
-  depends on the transition itself. Using the initial steady state as terminal
-  condition, Dynare "converges" to a wrong path, with consumption fixed at 6.667
-  and exploding assets ($s_{100} \approx 4626$), which violates the intertemporal
-  budget constraint. Imposing $s_{T-1} = s_T$ as in MATLAB gives the right answer.
-  Because the shock is truncated at $t = 30 < T$, this condition is also exact for
-  the infinite horizon problem.
-* In model II the default terminal condition is valid (the model is stationary),
-  but with $\chi = 0.001$ the economy has not fully returned to the steady state
-  at $T = 100$ ($s_{100} = 0.029$), so the MATLAB truncation $s_{99} = s_{100}$ and
-  the Dynare default give slightly different paths near $T$. To replicate MATLAB,
-  `SOE_B1b.mod` imposes the MATLAB condition by default. Running
-  `dynare SOE_B1b -DMATLAB_TERMINAL=0 -DT=1000` uses the standard Dynare terminal
-  condition with a long horizon (an approximation of the infinite horizon
-  solution). Compared with it, the MATLAB truncation changes assets by at most
-  3.4e-5 and consumption by 1.7e-6 over the plotted periods 0 to 50 (at most
-  1.2e-2 and 6.0e-4 close to $t = 100$).
+**`SOE_B1b.mod` ($\chi = 0.001$; experiments 3, 6).** Same model as `temaB1.mod`,
+written with beginning of period assets: `ca = y-c+r*s`, `s = s(-1)+ca(-1)` and
+`r = rst-chi*s` (`S(-1)` in `temaB1.mod`), with Dynare's standard terminal
+condition. `temaB1.mod` solves the AR(1) processes of the shocks as part of the
+model; `SOE_B1b.mod` builds the same paths with the same recursion and passes
+them as exogenous paths, which gives the same solution.
+`dynare SOE_B1b -DT=1000` uses a longer horizon.
 
 ### Running the Dynare files
 
 ```matlab
 addpath <dynare_folder>/matlab
 cd Dynare
-dynare SOE_B1          % model I : figure as figure(1) of TemaB1.m
-dynare SOE_B1b         % model II: figure as figure(2) of TemaB1.m
+dynare SOE_B1                      % experiments 1, 2, 4, 5 (figures Tema B1.1, .2, .4, .5)
+dynare SOE_B1b                     % experiments 3, 6       (figures Tema B1.3, .6)
+dynare SOE_B1 -DEXPERIMENTS=[2]    % only some experiments
 ```
 
-After each run the workspace contains `soe_B1` and `ss_B1` (or `soe_B1b` and
-`ss_B1b`): the transition paths with the same names as in `TemaB1.m` (`wt`, `lt`,
-`yt`, `cat`, `st`, `ct`, `rste`, `tht`, periods $1,\dots,T$) and the initial
-steady state (`wss`, `lss`, `yss`, `cass`, `s0`, `css`, `th0`, `rlong`). The full
-solution is in `oo_.endo_simul` (column 1 is period 0, columns 2 to 101 are
-periods 1 to 100) and is saved by Dynare in `SOE_B1/Output/SOE_B1_results.mat`
-(Dynare 6).
+After each run the workspace contains the struct `soe_B1` (or `soe_B1b`) with
+one field per experiment (`soe_B1.exp1`, `soe_B1.exp2`, `soe_B1.exp4`,
+`soe_B1.exp5`, `soe_B1b.exp3`, `soe_B1b.exp6`). Each field holds the paths for
+periods $1,\dots,T$: `wt`, `lt`, `yt`, `cat`, `st` (assets, beginning of
+period), `st_end` (assets, end of period), `ct`, `rste` (effective interest
+rate, model with premium), `tht` (productivity), `rst` (world interest rate)
+and `status` (1 if the solver converged). `ss_B1` (or `ss_B1b`) holds the
+initial steady state (`wss`, `lss`, `yss`, `cass`, `s0`, `css`, `th0`, `rlong`).
+
+`plot_TemaB1.m` draws the figures with the same panels, units, colors and line
+widths as `TemaB1_experimentos.m`; titles are written without accents, and
+`ylim('padded')` is replaced by an equivalent margin where it is not available
+(Octave, MATLAB before R2021a).
 
 ## Validation
 
@@ -183,55 +209,64 @@ cd Dynare
 results = compare_matlab_dynare;        % or compare_matlab_dynare(true) to save the PNG figures
 ```
 
-`compare_matlab_dynare.m` runs both `.mod` files, solves the original MATLAB
-systems by calling `ftransB1.m` and `ftransB1b.m` unchanged (same globals,
-initial guess and `fsolve` options as `TemaB1.m`, and again with tight
-tolerances), and checks the steady state, the equilibrium conditions and the
-IRFs. Results (Dynare 6.0 and GNU Octave 8.4; MATLAB was not available in the
-test environment):
+`compare_matlab_dynare.m` runs both `.mod` files and, for each experiment,
+checks the initial steady state, the exogenous paths, the equilibrium
+conditions and the IRFs against the MATLAB reference:
 
-| Check | Model I | Model II |
-|---|---|---|
-| Initial steady state, max abs. difference | 0 | 0 |
-| Productivity path, max abs. difference | 0 | 0 |
-| Original MATLAB system evaluated at the initial steady state, max abs. residual | 8.9e-16 | 8.9e-16 |
-| **Original MATLAB system evaluated at the Dynare solution**, max abs. residual | **3.6e-15** | **1.8e-15** |
-| Max abs. difference in IRFs, Dynare vs `fsolve` (tight tolerance), all variables, $t = 1,\dots,100$ | 2.5e-13 (assets, of order 29); at most 1e-14 for the rest | 2.1e-14 |
-| Dynare Newton iterations (final residual) | 3 (3.6e-15) | 5 (1.8e-15) |
+* experiments 1, 2, 4, 5: `fsolve` on `ftrans_rbc` (copied verbatim from
+  `TemaB1_experimentos.m`) with the options of the script ("as run") and with
+  tight tolerances ("exact"); the original `Matlab/ftransB1.m` is also evaluated
+  at the Dynare solution;
+* experiments 3, 6: `fsolve` on a MATLAB transcription of the equations of
+  `temaB1.mod` ("exact"). If a copy of `temaB1.mod` is placed in the `Dynare`
+  folder (it is ignored by git), the script also runs it exactly as
+  `TemaB1_experimentos.m` does ("as run") and with a tight tolerance.
 
-The Dynare paths satisfy the original MATLAB equilibrium conditions to machine
-precision, so both programs compute the same solution of the same system. The
-same holds with an interest rate shock in periods 1 to 3 (residuals of 3.6e-15
-and 2.7e-15), which confirms that the boundary conditions are replicated for any
-exogenous path.
+Results (Dynare 6.0 and GNU Octave 8.4, with `temaB1.mod` available; MATLAB was
+not available in the test environment):
 
-**Numerical tolerance of the original code.** `TemaB1.m` calls `fsolve` with its
-default tolerances, so its output is an approximate solution whose accuracy
-depends on the solver. In Octave 8.4 the default stopping rule is loose (max
-residual 6.8e-3 in model I and 1.2e-3 in model II), and the "as run" solution
-differs from the exact one by up to 0.33 in assets (model I) and 8.4e-3 (model
-II); in MATLAB this gap is expected to be much smaller. These are `fsolve`
-errors, not differences between the models: solving the same MATLAB system with
-tight tolerances gives the Dynare solution up to 2.5e-13. `compare_matlab_dynare.m`
-reports both comparisons.
+| Experiment | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| Initial steady state, max abs. difference | 0 | 0 | 0 | 0 | 0 | 0 |
+| Exogenous paths, max abs. difference | 0 | 0 | 0 | 0 | 0 | 0 |
+| MATLAB equations at the Dynare solution, max abs. residual | 3.6e-15 | 3.6e-15 | 2.7e-15 | 3.6e-15 | 3.6e-15 | 3.1e-13 |
+| **IRFs, max abs. difference with the exact solution** | 2.5e-13 | 3.5e-13 | 4.0e-14 | 2.2e-13 | 1.6e-13 | 2.0e-12 |
+| IRFs, max abs. difference with `temaB1.mod` (tolerance 1e-12) | | | 3.8e-14 | | | 9.8e-15 |
+| IRFs, max abs. difference with the script as run | 1.2e-8 | 3.1e-9 | 2.0e-7 | 4.4e-8 | 3.4e-7 | 4.7e-10 |
 
-Note for Octave users: `TemaB1.m` passes a T x 6 matrix as initial guess to
-`fsolve`, which works in MATLAB but fails in Octave 8.4 (`__fdjac__:
-nonconformant arguments`). `compare_matlab_dynare.m` calls the original functions
-through a wrapper that reshapes the vector of unknowns (what MATLAB's `fsolve`
-does internally), so it runs in both.
+The largest differences are always in assets, which are of order 10 to 30.
+The Dynare paths satisfy the MATLAB equilibrium conditions to machine
+precision and coincide with the exact solution of the same systems. The small
+differences with the script "as run" are the numerical error of its own
+solvers, not differences between the models: `fsolve` stops at `TolFun = 1e-10`
+(Octave's stopping rule is looser than MATLAB's, so the MATLAB gap is expected
+to be smaller), and `temaB1.mod` is solved with Dynare's default tolerance
+(`tolf = 1e-5`). Solving `temaB1.mod` with `tolf = 1e-12` gives the
+`SOE_B1b.mod` paths up to 4e-14.
 
-Figures produced by `compare_matlab_dynare(true)` (Dynare: lines; MATLAB
-`fsolve` as run in Octave: dots):
+Note for Octave users: `TemaB1_experimentos.m` passes a T x 6 matrix as initial
+guess to `fsolve`, which works in MATLAB but fails in Octave 8.4.
+`compare_matlab_dynare.m` solves the same systems through a wrapper that
+reshapes the vector of unknowns (what MATLAB's `fsolve` does internally), so it
+runs in both.
 
-![Model I: Dynare vs MATLAB](Dynare/figures/SOE_B1_vs_MATLAB.png)
+Figures produced by `compare_matlab_dynare(true)` in Octave (Dynare: lines;
+MATLAB: dots):
 
-![Model II: Dynare vs MATLAB](Dynare/figures/SOE_B1b_vs_MATLAB.png)
+![Experiment 1](Dynare/figures/TemaB1_exp1_vs_MATLAB.png)
+![Experiment 2](Dynare/figures/TemaB1_exp2_vs_MATLAB.png)
+![Experiment 3](Dynare/figures/TemaB1_exp3_vs_MATLAB.png)
+![Experiment 4](Dynare/figures/TemaB1_exp4_vs_MATLAB.png)
+![Experiment 5](Dynare/figures/TemaB1_exp5_vs_MATLAB.png)
+![Experiment 6](Dynare/figures/TemaB1_exp6_vs_MATLAB.png)
+
+The other files in `Dynare/figures` and `Matlab/Figures` are the figures of the
+original `TemaB1.m` (experiments I and II).
 
 ## Requirements
 
-* MATLAB with the Optimization Toolbox (`fsolve`) or GNU Octave, for the MATLAB codes.
+* MATLAB with the Optimization Toolbox (`fsolve`); `TemaB1_experimentos.m` also
+  needs MATLAB R2021a or later, Dynare 6 and `temaB1.mod`.
 * Dynare 5.x or 6.x for the `.mod` files (tested with Dynare 6.0 under GNU Octave
-  8.4). The `.mod` files only use features available in these versions
-  (`steady_state_model`, named equations, `perfect_foresight_setup`/`solver`,
-  vector values in the `shocks` block).
+  8.4). The optional `temaB1.mod` comparison in `compare_matlab_dynare.m` uses
+  Dynare 6 syntax.
