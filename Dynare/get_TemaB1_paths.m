@@ -7,10 +7,13 @@ function [p, ss] = get_TemaB1_paths(M_, oo_)
 % Inputs : M_, oo_  Dynare structures after perfect_foresight_solver.
 % Outputs: p   struct with the T x 1 transition paths (periods 1,...,T, i.e.
 %              the rows of the fsolve solution in TemaB1.m):
-%                p.wt, p.lt, p.yt, p.cat, p.st, p.ct  (both models)
+%                p.wt, p.lt, p.yt, p.cat, p.st, p.ct  (both models;
+%                p.st is the stock of assets at the beginning of period t)
+%                p.st_end (stock of assets at the end of period t)
 %                p.rste  (endogenous interest rate, model with risk premium)
 %                p.rst   (world interest rate path)
 %                p.tht   (productivity path)
+%                p.status (1 if the perfect foresight solver converged)
 %          ss  struct with the initial steady state, named as in TemaB1.m:
 %                ss.wss, ss.lss, ss.yss, ss.cass, ss.s0, ss.css, ss.th0,
 %                ss.rlong
@@ -31,12 +34,14 @@ p.lt  = endo('l');
 p.yt  = endo('y');
 p.cat = endo('ca');
 p.st  = endo('s');
+p.st_end = p.st + p.cat;             % end of period stock, s(t+1) = s(t) + ca(t)
 p.ct  = endo('c');
 p.tht = exo('theta');
 p.rst = exo('rst');
 if any(strcmp('r', en))
     p.rste = endo('r');
 end
+p.status = oo_.deterministic_simulation.status;   % 1 if the solver converged
 
 ss.wss   = endss('w');
 ss.lss   = endss('l');

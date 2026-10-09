@@ -8,3 +8,7 @@ Dynare/*_results.mat
 # MATLAB/Octave
 *.asv
 octave-workspace
+# temaB1.mod (Dynare model of Matlab/TemaB1_experimentos.m) is not part of the
+# repository; a local copy can be placed in Dynare/ for compare_matlab_dynare.m
+Dynare/temaB1.mod
+Dynare/temaB1/
