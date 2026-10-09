@@ -10,10 +10,10 @@ rate shocks, with MATLAB and with Dynare.
 |---|---|---|---|---|
 | 1 | Productivity shock, unanticipated | 0 | `fsolve` | `Dynare/SOE_B1.mod` |
 | 2 | Productivity shock, anticipated (announced in $t=1$, hits in $t=5$) | 0 | `fsolve` | `Dynare/SOE_B1.mod` |
-| 3 | Productivity shock, unanticipated | 0.001 | Dynare model `temaB1.mod` (not in this repository) | `Dynare/SOE_B1b.mod` |
+| 3 | Productivity shock, unanticipated | 0.001 | Dynare model `Matlab/temaB1.mod` | `Dynare/SOE_B1b.mod` |
 | 4 | World interest rate shock, unanticipated | 0 | `fsolve` | `Dynare/SOE_B1.mod` |
 | 5 | World interest rate shock, anticipated (announced in $t=1$, hits in $t=5$) | 0 | `fsolve` | `Dynare/SOE_B1.mod` |
-| 6 | World interest rate shock, unanticipated | 0.001 | Dynare model `temaB1.mod` (not in this repository) | `Dynare/SOE_B1b.mod` |
+| 6 | World interest rate shock, unanticipated | 0.001 | Dynare model `Matlab/temaB1.mod` | `Dynare/SOE_B1b.mod` |
 
 `SOE_B1.mod` is the model without risk premium ($\chi = 0$) and `SOE_B1b.mod`
 the model with an endogenous risk premium ($\chi = 0.001$). Both reproduce the
@@ -26,6 +26,7 @@ is described in `SOE.pdf`.
 SOE.pdf                         Model notes (equations and steady state)
 Matlab/
   TemaB1_experimentos.m         Main script, six experiments and figures (see note below)
+  temaB1.mod                    Dynare model used by TemaB1_experimentos.m (experiments 3, 6)
   TemaB1.m                      Original script: experiments I (= 1) and II, figures
   ftransB1.m                    Equilibrium conditions, chi = 0 (= ftrans_rbc of TemaB1_experimentos.m)
   ftransB1b.m                   Equilibrium conditions with risk premium used by TemaB1.m
@@ -115,9 +116,18 @@ circle and dashed line: initial steady state):
 * experiments 3, 6: solves the Dynare model `temaB1.mod` with
   `perfect_foresight_setup`/`perfect_foresight_solver` (Dynare 6 syntax).
 
-It needs `temaB1.mod` in the working folder (that file is not part of this
-repository), Dynare 6 and MATLAB R2021a or later (`ylim("padded")`,
-`exportgraphics`, `sgtitle`).
+Run it from the `Matlab` folder, where `temaB1.mod` is (Dynare needs the
+`.mod` file in the current folder), with Dynare 6 on the path and MATLAB
+R2021a or later (`ylim("padded")`, `exportgraphics`, `sgtitle`):
+
+```matlab
+addpath <dynare_folder>/matlab
+cd Matlab
+TemaB1_experimentos
+```
+
+Dynare writes its generated files (`+temaB1/`, `temaB1/`, `temaB1.log`) in the
+same folder; they are ignored by git. The PDF figures are also written there.
 
 Points of `TemaB1_experimentos.m` worth knowing (all reproduced by the Dynare
 files, so that the figures are identical):
@@ -217,13 +227,12 @@ conditions and the IRFs against the MATLAB reference:
   `TemaB1_experimentos.m`) with the options of the script ("as run") and with
   tight tolerances ("exact"); the original `Matlab/ftransB1.m` is also evaluated
   at the Dynare solution;
-* experiments 3, 6: `fsolve` on a MATLAB transcription of the equations of
-  `temaB1.mod` ("exact"). If a copy of `temaB1.mod` is placed in the `Dynare`
-  folder (it is ignored by git), the script also runs it exactly as
-  `TemaB1_experimentos.m` does ("as run") and with a tight tolerance.
+* experiments 3, 6: `Matlab/temaB1.mod` run exactly as `TemaB1_experimentos.m`
+  does ("as run") and with a tight tolerance, and `fsolve` on a MATLAB
+  transcription of its equations ("exact").
 
-Results (Dynare 6.0 and GNU Octave 8.4, with `temaB1.mod` available; MATLAB was
-not available in the test environment):
+Results (Dynare 6.0 and GNU Octave 8.4; MATLAB was not available in the test
+environment):
 
 | Experiment | 1 | 2 | 3 | 4 | 5 | 6 |
 |---|---|---|---|---|---|---|
@@ -266,7 +275,7 @@ original `TemaB1.m` (experiments I and II).
 ## Requirements
 
 * MATLAB with the Optimization Toolbox (`fsolve`); `TemaB1_experimentos.m` also
-  needs MATLAB R2021a or later, Dynare 6 and `temaB1.mod`.
-* Dynare 5.x or 6.x for the `.mod` files (tested with Dynare 6.0 under GNU Octave
-  8.4). The optional `temaB1.mod` comparison in `compare_matlab_dynare.m` uses
-  Dynare 6 syntax.
+  needs MATLAB R2021a or later and Dynare 6.
+* Dynare 5.x or 6.x for `SOE_B1.mod` and `SOE_B1b.mod` (tested with Dynare 6.0
+  under GNU Octave 8.4). The comparison with `temaB1.mod` in
+  `compare_matlab_dynare.m` uses Dynare 6 syntax (with Dynare 5 it is skipped).

@@ -9,9 +9,9 @@
  *   6 : unanticipated, persistent world interest rate shock (r* = 0.10 in t = 1)
  * Experiments 1, 2, 4 and 5 (chi = 0) are in SOE_B1.mod.
  *
- * TemaB1_experimentos.m solves experiments 3 and 6 with its own Dynare model
- * (temaB1.mod, not included in this repository). This file reproduces that
- * model exactly, written with the conventions of this repository:
+ * TemaB1_experimentos.m solves experiments 3 and 6 with its own Dynare model,
+ * Matlab/temaB1.mod. This file reproduces that model exactly, written with
+ * the conventions of this repository:
  *   - Premium (eq. 8 of SOE.pdf): r(t) = rw(t) - chi*s(t), with s(t) the
  *     stock of foreign assets at the BEGINNING of period t (S(t-1) in
  *     temaB1.mod, where S is the end of period stock).
