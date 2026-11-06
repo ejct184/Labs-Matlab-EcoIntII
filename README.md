@@ -1,3 +1,7 @@
+# Trabajo Final (Otoño 2026)
+**Fecha de entrega: 27 de noviembre**
+Enviar códigos de replicación y trabajo a: *uriel.luna@itam.mx* (cc al profesor)
+
 # Labs-Matlab-EcoIntII
 
 Numerical solution of a deterministic small open economy (SOE) model with an
