@@ -1,7 +1,9 @@
 # Trabajo Final (Otoño 2026)
 **Fecha de entrega: 27 de noviembre**
-Enviar códigos de replicación y trabajo a: *uriel.luna@itam.mx* (cc al profesor)
-Puede ser individual o en equipos de máximo 4 personas.
+- **Dado que el correo del itam no esta funcionando, mi correo de respaldo: uri184@hotmail.com**
+
+- Enviar códigos de replicación y trabajo a: *uriel.luna@itam.mx* (cc al profesor)
+- Puede ser individual o en equipos de máximo 4 personas.
 
 # Labs-Matlab-EcoIntII
 
